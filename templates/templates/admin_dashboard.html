@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard - Complaint Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .header {
+            background-color: #343a40;
+            padding: 1rem 0;
+            color: white;
+        }
+
+        .header .sitename {
+            flex-grow: 1;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .navmenu ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .navmenu ul li {
+            margin-right: 1rem;
+        }
+
+        .navmenu ul li a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .navmenu ul li a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        main {
+            padding-top: 70px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+
+        h4 {
+            margin-bottom: 20px;
+        }
+
+        table {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header d-flex align-items-center sticky-top">
+        <div class="container-fluid d-flex align-items-center">
+            <h1 class="sitename">
+                <a href="{{ url_for('index') }}" style="color: inherit; text-decoration: none;">Online Complaint Registration</a>
+            </h1>
+            <nav class="navmenu">
+                <ul class="d-flex list-unstyled">
+                    <li><a href="{{ url_for('index') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="container mt-5">
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">Users</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="agents-tab" data-bs-toggle="tab" data-bs-target="#agents" type="button">Agents</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <!-- User Complaints Tab -->
+            <div class="tab-pane fade show active" id="users">
+                <h4 class="text-center">User Issues</h4>
+                <div class="row">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Issue</th>
+                                <th>Image</th>  <!-- New column for image -->
+                                <th>Assign Agent</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr data-user-id="{{ user[0] }}">
+                                <td>{{ user[0] }}</td> <!-- Accessing user name -->
+                                <td>{{ user[1] }}</td> <!-- Accessing issue type -->
+                                <td>
+                                    <!-- Check if the image URL is available, otherwise show a default image -->
+                                    <img src="{{ user[2] or url_for('static', filename='default.jpg') }}" alt="Issue Image" style="width: 100px; height: 100px;">
+                                </td>
+                                <td>
+                                    <select class="form-select">
+                                        <option>Select Agent</option>
+                                        {% for agent in agents %}
+                                            <option>{{ agent[0] }}</option> <!-- Display agent names from agents table -->
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="assignAgent(this)">Assign</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Agents Tab -->
+            <div class="tab-pane fade" id="agents">
+                <h4 class="text-center">Agents</h4>
+                <div class="row">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Agent Name</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agents %}
+                            <tr data-agent-id="{{ agent[0] }}"> <!-- Assuming agent[0] is the ID -->
+                                <td>{{ agent[0] }}</td>
+                                <td>{{ 'Active' if agent[1] else 'Inactive' }}</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="toggleAgentStatus(this)">
+                                        {{ 'Deactivate' if agent[1] else 'Activate' }}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Online Complaint Registration. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Function to assign an agent to a user
+        function assignAgent(button) {
+            // Find the parent row of the button to locate the relevant dropdown
+            let row = button.closest('tr');
+            let agentSelect = row.querySelector('.form-select');
+            let selectedAgent = agentSelect.value;
+
+            if (selectedAgent !== "Select Agent") {
+                // Change the button text to "Assigned"
+                button.textContent = 'Assigned';
+                // Disable the button to prevent further clicks
+                button.disabled = true;
+                // Change button style
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-success');
+
+                // Simulate saving the assignment to the backend
+                alert(`Assigned Agent: ${selectedAgent}`);
+                
+                // You can perform an AJAX request to update the assignment in the backend
+                // Example: Send the assignment to the backend for processing
+                // fetch('/assign-agent', { method: 'POST', body: JSON.stringify({ userId: row.dataset.userId, agentName: selectedAgent }) });
+            } else {
+                alert('Please select an agent before assigning.');
+            }
+        }
+
+        // Function to toggle agent activation status
+        function toggleAgentStatus(button) {
+            let row = button.closest('tr');
+            let statusCell = row.querySelector('td:nth-child(2)');
+            
+            if (statusCell.textContent === 'Active') {
+                statusCell.textContent = 'Inactive';
+                button.textContent = 'Activate';
+            } else {
+                statusCell.textContent = 'Active';
+                button.textContent = 'Deactivate';
+            }
+
+            // Simulate status update on backend
+            alert(`Agent status changed to: ${statusCell.textContent}`);
+
+            // You can perform an AJAX request here to update the status in the backend
+            // fetch('/toggle-agent-status', { method: 'POST', body: JSON.stringify({ agentId: row.dataset.agentId, newStatus: statusCell.textContent }) });
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

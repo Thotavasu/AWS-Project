@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard - Complaint Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Open Sans', sans-serif; }
+        .header { background-color: #343a40; padding: 1rem 0; color: white; }
+        .header .sitename { flex-grow: 1; font-size: 1.5rem; margin: 0; }
+        .navmenu ul { margin: 0; padding: 0; list-style: none; }
+        .navmenu ul li { margin-right: 1rem; }
+        .navmenu ul li a { color: white; text-decoration: none; }
+        .navmenu ul li a:hover { text-decoration: underline; }
+        footer { background-color: #f8f9fa; padding: 1rem; text-align: center; }
+        main { padding-top: 70px; }
+        .container { max-width: 900px; margin: auto; padding: 20px; }
+        .card { margin-bottom: 20px; }
+        h4 { margin-bottom: 20px; }
+        table { margin-top: 20px; }
+        .upload-btn { display: none; }
+    </style>
+</head>
+<body>
+    <header class="header d-flex align-items-center sticky-top">
+        <div class="container-fluid d-flex align-items-center">
+            <h1 class="sitename">
+                <a href="{{ url_for('index') }}" style="color: inherit; text-decoration: none;">Agent Dashboard</a>
+            </h1>
+            <nav class="navmenu">
+                <ul class="d-flex list-unstyled">
+                    <li><a href="{{ url_for('index') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="container mt-5">
+    <h4 class="text-center">Assigned User Issues</h4>
+    <div class="row">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>User Name</th>
+                    <th>Issue</th>
+                    <th>Image</th>
+                    <th>Update Status</th>
+                    <th>Accept/Decline Job</th>
+                    <th>Upload Resolution Image</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if ag_dash %}
+                    {% for user in ag_dash %}
+                    <tr>
+                        <td>{{ user[0] }}</td>
+                        <td>{{ user[1] }}</td>
+                        <td>
+                            <img src="{{ user[2] or url_for('static', filename='default.jpg') }}" alt="Issue Image" style="width: 100px; height: 100px;">
+                        </td>
+                        <td>
+                            <form method="POST">
+                                
+                                <input type="hidden" name="complaint_id" value="{{ user[3] }}">
+                                <select name="status" class="form-select" onchange="checkUploadVisibility(this, '{{ user[0] }}')">
+                                    <option value="">Select Status</option>
+                                    <option value="Resolved">Resolved</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Ongoing">Ongoing</option>
+                                </select>
+                        </td>
+                        <td>
+                            <button type="submit" class="btn btn-primary" name="action" value="Accepted" onclick="acceptJob(this)">Accept</button>
+                            <button type="submit" class="btn btn-danger" name="action" value="Declined" onclick="declineJob(this)">Decline</button>
+                            </form>
+                        </td>
+                        <td>
+                            <input type="file" class="form-control upload-btn" id="upload-{{ user[0] }}" accept="image/*">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No assigned issues found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+    <footer>
+        <p>&copy; 2024 Online Complaint Registration. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function acceptJob(button) {
+            const row = button.closest('tr');
+            row.querySelector('button.btn-danger').disabled = true; 
+            button.disabled = true; 
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-success');
+            button.textContent = 'Accepted';
+        }
+
+        function declineJob(button) {
+            const row = button.closest('tr');
+            row.querySelector('button.btn-primary').disabled = true; 
+            button.disabled = true; 
+            button.classList.remove('btn-danger');
+            button.classList.add('btn-secondary');
+            button.textContent = 'Declined';
+        }
+
+        function checkUploadVisibility(select, userName) {
+            const uploadInput = document.getElementById(`upload-${userName}`);
+            uploadInput.style.display = (select.value === 'Resolved') ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
